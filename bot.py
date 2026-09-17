@@ -5,7 +5,7 @@ import re
 import os
 from dotenv import load_dotenv
 load_dotenv()
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKENN")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 GEMINI_KEY = os.environ.get("GEMINI_KEY")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
