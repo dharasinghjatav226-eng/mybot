@@ -1,5 +1,3 @@
-﻿PyTelegramBotAPI
-requests
-google-generativeai
-python-dotenv
+pyTelegramBotAPI
 flask
+google-genai
