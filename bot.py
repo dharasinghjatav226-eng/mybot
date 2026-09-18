@@ -28,7 +28,7 @@ def start(message):
 def handle_all(message):
     try:
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-2.5-flash"
             contents=message.text
         )
         bot.reply_to(message, response.text)
