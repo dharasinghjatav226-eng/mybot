@@ -1,17 +1,10 @@
-import telebot
-import google.generativeai as genai
-import requests
-import re
+import requests, re
 import os
-from dotenv import load_dotenv
-load_dotenv()
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-GEMINI_KEY = os.environ.get("GEMINI_KEY")
-
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
-
+import telebot
+from datetime import datetime
+import pytz
+TOKEN = os.environ.get("BOT_TOKEN")
+bot = telebot.TeleBot(TOKEN)
 def get_live_weather(city="Indore"):
     try:
         geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
@@ -24,7 +17,10 @@ def get_live_weather(city="Indore"):
         temp = w['current']['temperature_2m']
         wind = w['current']['wind_speed_10m']
         hum = w['current']['relative_humidity_2m']
-        return f"{city} ka LIVE Mausam: {temp}°C, Hawa {wind} km/h, Humidity {hum}%"
+        ist = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(ist)
+        time_str = now.strftime("%d-%m-%Y, %I:%M %p")
+        return f"{city} ka LIVE Mausam: {temp}°C, Hawa {wind} km/h, Humidity {hum}%\nDate/Time: {time_str} (IST)"
     except:
         return None
 
@@ -39,14 +35,14 @@ def handle(message):
                 city = match.group(1)
             elif "morena" in text: city = "Morena"
             elif "gwalior" in text: city = "Gwalior"
-            weather_info = get_live_weather(city.capitalize())
-            if weather_info:
-                bot.reply_to(message, weather_info)
-                return
-        response = model.generate_content(message.text)
-        bot.reply_to(message, response.text)
-    except Exception as e:
-        bot.reply_to(message, f"Error: {e}")
 
-print("ULTIMATE Super Agent ON hai...")
-bot.infinity_pollimg()
+            weather = get_live_weather(city)
+            if weather: bot.reply_to(message, weather)
+            else: bot.reply_to(message, f"{city} ka mausam nahi mila")
+        else:
+            bot.reply_to(message, "Mausam pucho, jaise 'Indore ka mausam'")
+    except Exception as e:
+        print(e)
+
+print("Bot chal raha hai...")
+bot.polling()
