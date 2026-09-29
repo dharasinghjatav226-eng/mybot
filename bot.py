@@ -1,48 +1,53 @@
-import requests, re
 import os
+import requests
 import telebot
-from datetime import datetime
-import pytz
+import urllib.parse
+
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
-def get_live_weather(city="Indore"):
+
+def get_weather(city):
     try:
-        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
-        geo = requests.get(geo_url, timeout=10).json()
-        if 'results' not in geo: return None
-        lat = geo['results'][0]['latitude']
-        lon = geo['results'][0]['longitude']
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m,relative_humidity_2m"
-        w = requests.get(weather_url, timeout=10).json()
-        temp = w['current']['temperature_2m']
-        wind = w['current']['wind_speed_10m']
-        hum = w['current']['relative_humidity_2m']
-        ist = pytz.timezone('Asia/Kolkata')
-        now = datetime.now(ist)
-        time_str = now.strftime("%d-%m-%Y, %I:%M %p")
-        return f"{city} ka LIVE Mausam: {temp}°C, Hawa {wind} km/h, Humidity {hum}%\nDate/Time: {time_str} (IST)"
+        url = f"https://wttr.in/{city}?format=%C+%t+%w+%h"
+        r = requests.get(url, timeout=10)
+        return r.text
     except:
         return None
 
-@bot.message_handler(func=lambda m: True)
-def handle(message):
+def ask_ai(question):
     try:
-        text = message.text.lower()
-        if "mausam" in text or "mousam" in text or "weather" in text or "tapman" in text:
-            city = "Indore"
-            match = re.search(r"(\w+)\s+ka\s+(mausam|mousam|weather|tapman)", text)
-            if match:
-                city = match.group(1)
-            elif "morena" in text: city = "Morena"
-            elif "gwalior" in text: city = "Gwalior"
+        q = urllib.parse.quote(question)
+        url = f"https://text.pollinations.ai/{q}?system=You are a helpful assistant. Answer in Hindi if user speaks Hindi."
+        r = requests.get(url, timeout=15)
+        if r.status_code == 200:
+            return r.text
+    except:
+        pass
+    return None
 
-            weather = get_live_weather(city)
-            if weather: bot.reply_to(message, weather)
-            else: bot.reply_to(message, f"{city} ka mausam nahi mila")
-        else:
-            bot.reply_to(message, "Mausam pucho, jaise 'Indore ka mausam'")
-    except Exception as e:
-        print(e)
+@bot.message_handler(commands=['start'])
+def start(m):
+    bot.reply_to(m, "🙏 Namaste! Main Smart Bot hu.\nMujhse kuch bhi pucho - Mausam, Padhai, Joke sab!")
 
-print("Bot chal raha hai...")
-bot.polling()
+@bot.message_handler(func=lambda m: True)
+def all_reply(m):
+    text = m.text
+    lower = text.lower()
+
+    if "mausam" in lower or "weather" in lower:
+        city = "Indore"
+        for w in text.split():
+            if w.lower() not in ["ka","kya","hai","mausam","weather","batao","ka"]:
+                if len(w) > 2:
+                    city = w
+        bot.send_chat_action(m.chat.id, 'typing')
+        w = get_weather(city)
+        bot.reply_to(m, f"🌤️ {city} ka mausam: {w}" if w else "City nahi mila")
+        return
+
+    bot.send_chat_action(m.chat.id, 'typing')
+    ans = ask_ai(text)
+    bot.reply_to(m, ans if ans else "Network issue hai, fir se pucho")
+
+print("Bot Chal Raha Hai...")
+bot.infinity_polling()
