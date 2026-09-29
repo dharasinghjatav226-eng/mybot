@@ -38,4 +38,7 @@ def reply_all(message):
         bot.reply_to(message, ans)
 
 print("Bot chal raha hai...")
+import time
+bot.remove_webhook()
+time.sleep(2)
 bot.infinity_polling()
