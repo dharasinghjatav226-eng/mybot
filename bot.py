@@ -3,6 +3,7 @@ import requests
 import telebot
 import threading
 from flask import Flask
+import urllib.parse
 
 app_flask = Flask(__name__)
 @app_flask.route('/')
@@ -21,34 +22,36 @@ def get_weather(city):
 
 def ask_ai(question):
     try:
-        # Ye FREE ChatGPT API hai
-        url = f"https://text.pollinations.ai/{question}"
+        # Thoda smart prompt taaki {} na aaye
+        full_q = f"Tum ek funny Hindi assistant ho. Sawal: {question}"
+        encoded = urllib.parse.quote(full_q)
+        url = f"https://text.pollinations.ai/{encoded}"
         r = requests.get(url, timeout=15)
-        return r.text
+        ans = r.text.strip()
+        if not ans or ans == "{}" or len(ans) < 2:
+            return "Hehe, ek aur suno: Ek aadmi doctor ke paas gaya, bola 'mujhe sab bhool jata hai', doctor bola 'kab se?', aadmi bola 'kab se kya?' 😂"
+        return ans
     except:
-        return "Thoda wait karo, soch raha hu..."
+        return "Thoda wait karo, network slow hai, fir se bolo..."
 
 @bot.message_handler(func=lambda m: True)
 def reply_all(message):
     text = message.text.lower()
     
-    # Agar mausam pucha to mausam
     if "mausam" in text or "weather" in text:
         city = message.text.split()[-1]
-        if city.lower() in ["mausam","weather"]: city = "Indore"
+        if city.lower() in ["mausam", "weather", "ka"]:
+            city = "Indore"
         w = get_weather(city)
         bot.reply_to(message, f"{city} ka mausam: {w}")
     else:
-        # Baki sab sawal ChatGPT ki tarah
         ans = ask_ai(message.text)
         bot.reply_to(message, ans)
 
-# Render ke liye Web Server
 def run_web():
     port = int(os.environ.get("PORT", 10000))
     app_flask.run(host="0.0.0.0", port=port)
 
 threading.Thread(target=run_web, daemon=True).start()
-
 print("Bot chal raha hai...")
 bot.polling()
