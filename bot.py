@@ -1,6 +1,12 @@
 import os
 import requests
 import telebot
+import threading
+from flask import Flask
+
+app_flask = Flask(__name__)
+@app_flask.route('/')
+def home(): return "Bot is running - ChatGPT Mode ON"
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -15,7 +21,7 @@ def get_weather(city):
 
 def ask_ai(question):
     try:
-        # Ye FREE ChatGPT jaisa API hai
+        # Ye FREE ChatGPT API hai
         url = f"https://text.pollinations.ai/{question}"
         r = requests.get(url, timeout=15)
         return r.text
@@ -37,8 +43,12 @@ def reply_all(message):
         ans = ask_ai(message.text)
         bot.reply_to(message, ans)
 
+# Render ke liye Web Server
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app_flask.run(host="0.0.0.0", port=port)
+
+threading.Thread(target=run_web, daemon=True).start()
+
 print("Bot chal raha hai...")
-import time
-bot.remove_webhook()
-time.sleep(2)
-bot.infinity_polling()
+bot.polling()
