@@ -11,14 +11,13 @@ def home(): return "Bot is running - ChatGPT Mode ON"
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
-
 def get_weather(city):
     try:
-        url = f"https://wttr.in/{city}?format=%C+%t"
+        url = f"https://wttr.in/{city}?format=%C+%t+%w+%h"
         r = requests.get(url, timeout=10)
         return r.text
     except:
-        return None
+        return "Network slow hai"
 
 def ask_ai(question):
     try:
@@ -39,12 +38,10 @@ def reply_all(message):
     text = message.text.lower()
     
     if "mausam" in text or "weather" in text:
-        city = message.text.split()[-1]
-        if city.lower() in ["mausam", "weather", "ka"]:
-            city = "Indore"
+        city = "Indore" # humesha Indore ka hi batayega, best hai
         w = get_weather(city)
-        bot.reply_to(message, f"{city} ka mausam: {w}")
-    else:
+bot.reply_to(message, f"Indore ka mausam: {w} ☁️")
+else:
         ans = ask_ai(message.text)
         bot.reply_to(message, ans)
 
