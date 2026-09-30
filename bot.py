@@ -38,13 +38,12 @@ def reply_all(message):
     text = message.text.lower()
     
     if "mausam" in text or "weather" in text:
-        city = "Indore" # humesha Indore ka hi batayega, best hai
+        city = "Indore"
         w = get_weather(city)
-bot.reply_to(message, f"Indore ka mausam: {w} ☁️")
-else:
+        bot.reply_to(message, f"Indore ka mausam: {w} ☁️")
+    else:
         ans = ask_ai(message.text)
         bot.reply_to(message, ans)
-
 def run_web():
     port = int(os.environ.get("PORT", 10000))
     app_flask.run(host="0.0.0.0", port=port)
